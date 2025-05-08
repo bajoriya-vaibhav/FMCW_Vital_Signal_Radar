@@ -81,12 +81,12 @@ Vaibhav Bajoriya & \textsc{IMT2022574} \\
 \subsection{Background and Motivation}
 Traditional vital sign monitoring systems require direct contact with the subject, which can be uncomfortable and restrictive, particularly for continuous long-term monitoring. This is especially problematic for vulnerable populations such as infants, elderly patients, or those with certain medical conditions where skin attachments are impractical or potentially harmful.
 
-Frequency-Modulated Continuous Wave (FMCW) radar technology offers a promising alternative by enabling contactless monitoring of vital signs. By detecting subtle movements of the chest wall during respiration, these systems can accurately measure breathing rates without physical contact with the subject.
+Frequency-Modulated Continuous Wave (FMCW) radar technology offers a promising alternative by enabling contactless monitoring of vital signs. By detecting subtle movements of the chest during respiration, these systems can accurately measure breathing rates without physical contact with the subject.
 
 \subsection{FMCW Radar for Physiological Monitoring}
 FMCW radar works by transmitting a continuous wave with linearly increasing frequency over time (a chirp). When these waves reflect off a moving object, such as a breathing chest, they return with phase shifts proportional to the object's displacement. By analyzing these phase shifts, the system can detect movements as small as fractions of a millimeter—sufficient to capture the chest wall motion during respiration.
 
-Millimeter-wave (mmWave) radar, operating at frequencies around 77-81 GHz, is particularly suitable for this application due to its:
+Millimeter-wave (mmWave) radar, operating at frequencies around 77-81 GHz and with a bandwidth of 1 GHz, is particularly suitable for this application due to its:
 \begin{itemize}
     \item High sensitivity to small motions (sub-millimeter)
     \item Ability to penetrate common materials like clothing and bedding
@@ -100,7 +100,7 @@ The primary goal of this project is to develop and evaluate a non-contact breath
     \item Configure the AWR1642 radar for optimal detection of respiratory movements
     \item Implement signal processing algorithms to extract breathing rates from raw radar data
     \item Assess the accuracy and reliability of the system in controlled environments
-    \item Identify limitations and potential improvements for future implementations
+    \item Identify limitations and potential improvements for future implementations, and how can we extract the heart rate from the same experiment.
 \end{itemize}
 
 \section{Radar Parameters and Theory}
@@ -140,7 +140,7 @@ For breathing detection, we are primarily interested in the phase of the IF sign
 
 Where $\lambda$ is the wavelength of the radar signal (approximately 3.9 mm at 77 GHz).
 
-This relationship allows the system to detect chest wall movements on the order of tens to hundreds of microns, sufficient for accurate breathing rate estimation.
+This relationship allows the system to detect chest movements on the order of tens to hundreds of microns, sufficient for accurate breathing rate estimation.
 
 \subsection{Configuration Parameters for AWR1642 BOOST}
 The AWR1642 BOOST radar module was configured with parameters optimized for breathing detection:
@@ -153,11 +153,12 @@ The AWR1642 BOOST radar module was configured with parameters optimized for brea
 \hline
 Carrier Frequency & 77 GHz \\
 Bandwidth & 1 GHz \\
-Chirp Duration & $45.07\,\mu\mathrm{s}$ \\
+RampEndTime & $45.07\,\mu\mathrm{s}$\\
+Chirp Repition Period & $94\,\mu\mathrm{s}$ \\
 Frequency Slope & $22.11~\mathrm{MHz}/\,\mu\mathrm{s}$ \\
 ADC Samples per Chirp & 113 \\
 Chirps per Frame & 125 \\
-Frame Period & 11.75 ms \\
+Active Frame Time & 11.75 ms \\
 Maximum Range & 1 m \\
 Range Resolution & 18 cm \\
 Receiver Channels & 4 (Rx 0-3) \\
@@ -166,6 +167,12 @@ Transmitter Channels & 2 (Tx 0-1) \\
 \end{tabular}
 \caption{AWR1642 BOOST Configuration Parameters}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{param.png} % Create this diagram
+\caption{Radar Parameters}
+\end{figure}
 
 These parameters create a configuration that prioritizes high-resolution range detection with sufficient temporal sampling to capture the breathing rate, which typically falls within 0.1-0.7 Hz (6-42 breaths per minute).
 
@@ -185,7 +192,7 @@ The breathing rate detection system follows a multi-stage signal processing pipe
 \begin{minipage}{0.48\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Pattern_detection_Signal_processing.png}
-  \caption{Breathe detection by capturing breath cycles (consecutive peaks + troughs = 1 cycle)}
+  \caption{Breathe detection by capturing breath cycles (consecutive peak + trough = 1 cycle)}
 \end{minipage}
 \end{figure}
 
@@ -249,7 +256,7 @@ Data processing was implemented in MATLAB, with the following key components:
 \end{itemize}
 
 \subsection{Test Protocol}
-Measurements were conducted with subjects in a seated position at a distance of approximately 1 meter from the radar. Subjects were instructed to breathe normally during the data collection period of approximately 60 seconds. For validation purposes, reference measurements were taken using a conventional respiration belt.
+Measurements were conducted with subjects in a seated position at a distance of approximately 1 meter from the radar. Subjects were instructed to breathe normally during the data collection period of approximately 60 seconds. For validation purposes, we manually counted the breath cycles during the experiment.
 
 \section{Signal Processing Implementation}
 
@@ -448,14 +455,14 @@ The chest displacement signal obtained from the radar measurements showed clear 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{person_1.jpeg} % Create this figure
-\caption{Breathing Rate}
+\caption{Breathing Rate for Person-1}
 \end{figure}
 
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{person_2.jpeg} % Create this figure
-\caption{Breathing Rate}
+\caption{Breathing Rate for Person-2}
 \end{figure}
 
 \begin{figure}[H]
@@ -464,10 +471,7 @@ The chest displacement signal obtained from the radar measurements showed clear 
 \caption{No Breathing Rate Detected}
 \end{figure}
 
-
-
-
-The typical peak-to-peak displacement amplitude observed during normal breathing was approximately 2-5 mm, which is consistent with expected physiological chest movement.
+The typical peak-to-peak displacement amplitude observed during normal breathing was approximately 2-8 mm, which is consistent with expected physiological chest movement. And for the noise and no breathe rate detection the chest movement or peak-to-peak displacement amplitude observed during no breathing is approximately taken less than 1mm which are coming approximately in micro meters. Hence we are directly giving 0 breathe rate and no further processing.
 
 \subsection{Breathing Rate Estimation Accuracy}
 The estimated breathing rates were compared with reference measurements from a conventional respiration belt:
@@ -478,15 +482,15 @@ The estimated breathing rates were compared with reference measurements from a c
 \hline
 \textbf{Subject} & \textbf{Radar (BPM)} & \textbf{Reference (BPM)} & \textbf{Error (\%)} \\
 \hline
-Person-1 & 13 & 13 & 0\% \\
-Person-2 & 12 & 13 & 7.7\% \\
+Person-1 & 13 & 14 & 7.14\% \\
+Person-2 & 12 & 12 & 0\% \\
 No breathrate & 0 & 0 & 0\% \\
 \hline
 \end{tabular}
 \caption{Breathing Rate Estimation Results}
 \end{table}
 
-Reference taken is manually counting the breath rates while taking reading.The system demonstrated high accuracy in breathing rate estimation, with errors typically less than 8\% compared to the reference measurements.
+Reference taken is manually counting the breath rates while taking reading.The system demonstrated high accuracy in breathing rate estimation, with errors typically less than 8\% compared to the reference measurements with delta difference in the bpm at max ±2 over multiple experiments, and most of the time it is coming correctly.
 
 \subsection{System Limitations and Challenges}
 Several limitations and challenges were identified during the evaluation:
@@ -508,7 +512,7 @@ This project successfully demonstrated the use of FMCW mmWave radar technology f
 
 \begin{itemize}
     \item Development of a complete signal processing pipeline for extracting vital signs from radar data
-    \item Accurate breathing rate estimation with errors typically below 3\%
+    \item Accurate breathing rate estimation with errors typically below ±2 bpm
     \item Demonstration of the feasibility of using commercial off-the-shelf radar sensors (AWR1642) for vital sign monitoring
 \end{itemize}
 
