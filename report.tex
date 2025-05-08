@@ -384,53 +384,123 @@ unwrapped_phase = unwrap(phase_signal);
 wavelength = 3e8 / 77e9; % 77 GHz
 displacement = unwrapped_phase * wavelength / (4 * pi);
 displacement = reshape(displacement, num_frames, chirps_per_frame);
+% Average across chirps per frame
+chest_displacement = mean(displacement, 2);
+chest_displacement = detrend(chest_displacement); % remove trend
+chest_displacement = chest_displacement - mean(chest_displacement); % zero mean
+
+%% Plotting chest displacement
+
+figure;
+plot(chest_displacement);
+xlabel('Samples');
+ylabel('Displacement (m)');
+title('Raw Chest Displacement for 1 min');
+grid on;
 \end{lstlisting}
 
 The phase was unwrapped to handle discontinuities at $\pm\pi$ boundaries, and then converted to physical displacement using the relationship between phase change and path length difference.
 
-\subsection{Breathing Rate Estimation}
-To estimate the breathing rate, spectral analysis was performed on the displacement signal:
+\subsection{Peak-to-peak check}
+To check if the chest-displacement if above some threshold so that we can say there is any breathing movement or not.
 
 \begin{lstlisting}[language=Matlab]
-    movmean_filter = ones(1, 10) / 10; % Moving average filter
-    chest_displacement = conv(chest_displacement, movmean_filter, 'same');
-    
-    % finding peaks (inhalation points)
-    min_peak_distance = 10;
-    [peak_values, peak_locs] = findpeaks(chest_displacement, ...
+%% Step 5: Peak-to-peak check
+ptp_disp = max(chest_displacement) - min(chest_displacement);
+disp(['Peak-to-peak chest displacement: ', num2str(ptp_disp, '%.2e'), ' meters']);
+
+if ptp_disp < 1e-3
+    disp('No significant breathing detected (displacement < 1e-3 m).');
+    breathing_rate_bpm = 0;
+else
+\end{lstlisting}
+
+\subsection{Breathing Rate Estimation}
+To estimate the breathing rate, we used 2 methods:
+\begin{enumerate}
+    \item Detecting the peaks (Inhaling) and trough (Exhaling) cyclic pattern.
+    \item Frequency Spectral Analysis of chest-displacement signal
+\end{enumerate}
+Using the Breathing Cycle Pattern Detection in chest-displacement signal and capturing the periodic breathing cycle constituting of a peak (inhaling) and a trough (exhaling) and its frequency will give the bpm It is performed like this:
+
+\begin{lstlisting}[language=Matlab]
+movmean_filter = ones(1, 10) / 10; % Moving average filter
+chest_displacement = conv(chest_displacement, movmean_filter, 'same');
+
+% finding peaks (inhalation points)
+min_peak_distance = 10;
+[peak_values, peak_locs] = findpeaks(chest_displacement, ...
+                                    'MinPeakDistance', min_peak_distance);
+
+% finding troughs (exhalation points)
+[trough_values, trough_locs] = findpeaks(-chest_displacement, ...
                                         'MinPeakDistance', min_peak_distance);
+trough_values = -trough_values;
+
+% Combine peaks and troughs and sort them by location
+all_extrema_locs = [peak_locs; trough_locs];
+all_extrema_values = [peak_values; trough_values];
+all_extrema_types = [ones(size(peak_locs)); zeros(size(trough_locs))]; % 1 for peaks, 0 for troughs
+
+[all_extrema_locs, sort_idx] = sort(all_extrema_locs);
+all_extrema_values = all_extrema_values(sort_idx);
+all_extrema_types = all_extrema_types(sort_idx);
+
+% Count complete breathing cycles by ensuring proper alternating pattern
+breathing_cycles = 0;
+i = 1;
+
+while i < length(all_extrema_types)
+    current_type = all_extrema_types(i);
+    next_type = all_extrema_types(i+1);
     
-    % finding troughs (exhalation points)
-    [trough_values, trough_locs] = findpeaks(-chest_displacement, ...
-                                            'MinPeakDistance', min_peak_distance);
-    trough_values = -trough_values;
-    
-    % Combine peaks and troughs and sort them by location
-    all_extrema_locs = [peak_locs; trough_locs];
-    all_extrema_values = [peak_values; trough_values];
-    all_extrema_types = [ones(size(peak_locs)); zeros(size(trough_locs))]; % 1 for peaks, 0 for troughs
-    
-    [all_extrema_locs, sort_idx] = sort(all_extrema_locs);
-    all_extrema_values = all_extrema_values(sort_idx);
-    all_extrema_types = all_extrema_types(sort_idx);
-    
-    % Count complete breathing cycles by ensuring proper alternating pattern
-    breathing_cycles = 0;
-    i = 1;
-    
-    while i < length(all_extrema_types)
-        current_type = all_extrema_types(i);
-        next_type = all_extrema_types(i+1);
-        
-        % If we have a proper alternation (peak->trough or trough->peak)
-        if current_type ~= next_type
-            breathing_cycles = breathing_cycles + 0.5; % Half cycle completed
-            i = i + 1;
-        else
-            % Skip duplicate type (two peaks or two troughs in a row)
-            i = i + 1;
-        end
+    % If we have a proper alternation (peak->trough or trough->peak)
+    if current_type ~= next_type
+        breathing_cycles = breathing_cycles + 0.5; % Half cycle completed
+        i = i + 1;
+    else
+        % Skip duplicate type (two peaks or two troughs in a row)
+        i = i + 1;
     end
+end
+\end{lstlisting}
+
+Using the Frequency spectral analysis of chest-displacement signal and capturing the quasi-periodic breathing signal and its frequency will give the bpm It is performed like this:
+
+\begin{lstlisting}[language=Matlab]
+%% Step 6: FFT for breathing rate estimation
+movmean_filter = ones(1, 10) / 10; % Moving average filter
+chest_displacement = conv(chest_displacement, movmean_filter, 'same');
+
+nfft = 4096;
+f = (0:nfft-1) * (fs_frame / nfft);
+breath_spectrum = abs(fft(chest_displacement, nfft));
+
+% Focus on a reasonable breathing frequency range
+f_low = 0.11; f_high = 0.7; % Hz
+valid_idx = (f >= f_low) & (f <= f_high);
+f_valid = f(valid_idx);
+spectrum_valid = breath_spectrum(valid_idx);
+
+% Find peak
+[~, idx_peak] = max(spectrum_valid);
+breathing_freq_hz = f_valid(idx_peak);
+breathing_rate_bpm = breathing_freq_hz * 60;
+
+% Plot breathing frequency spectrum
+figure;
+plot(f_valid, spectrum_valid);
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+title('Breathing Frequency Spectrum');
+grid on;
+hold on;
+plot(breathing_freq_hz, spectrum_valid(idx_peak), 'ro', 'MarkerSize', 10);
+text(breathing_freq_hz, spectrum_valid(idx_peak), ...
+     sprintf(' %.2f Hz (%.1f BPM)', breathing_freq_hz, breathing_rate_bpm));
+hold off;
+%% Final Output
+fprintf('Estimated Breathing Rate = %.2f breaths per minute\n', breathing_rate_bpm);
 \end{lstlisting}
 
 The analysis focused on the physiologically relevant frequency range of 0.1-0.7 Hz, corresponding to 6-42 breaths per minute, and identified the peak frequency as the estimated breathing rate.
@@ -442,29 +512,51 @@ The chest displacement signal obtained from the radar measurements showed clear 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{slow_breath.jpeg} % Create this figure
-\caption{Slow Breathing Rate}
+\includegraphics[width=1\textwidth]{vaibhav_raw.jpeg} % Create this figure
+\caption{Raw Captured Breathing for person-1 (Vaibhav)}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{fast_breath.jpeg} % Create this figure
-\caption{Fast Breathing Rate}
+\includegraphics[width=1\textwidth]{vaibhav_fft.jpeg} % Create this figure
+\caption{FFT breathing Rate for Person-1 (Vaibhav)}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{person_1.jpeg} % Create this figure
-\caption{Breathing Rate for Person-1}
+\includegraphics[width=1\textwidth]{vaibhav_peak.jpeg} % Create this figure
+\caption{Peak Breathing Rate for Person-1 (Vaibhav)}
 \end{figure}
 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{person_2.jpeg} % Create this figure
-\caption{Breathing Rate for Person-2}
+\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
+\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
 \end{figure}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{raw_aditya.jpeg} % Create this figure
+\caption{Raw Captured Breathing for person-1 (Aditya)}
+
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
+\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
+\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
+\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
+\end{figure}
+\end{figure}
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{no_breath.jpeg} % Create this figure

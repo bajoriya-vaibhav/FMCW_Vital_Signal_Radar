@@ -9,7 +9,7 @@ frame_period = 0.1958;   % Active Frame period (s) or 11.75ms
 fs_frame = 1 / frame_period; % Frame rate (~5.107 Hz) so 5.1 frames per seconds
 
 %% reading .bin file
-bin_filename = '.\vaibhav_breathrate_1Ghz_1\iqData_Raw_0.bin';
+bin_filename = '.\aditya_breathrate_1Ghz_1\iqData_Raw_0.bin';
 fid = fopen(bin_filename, 'rb');
 raw_data = fread(fid, 'uint8=>uint8');
 fclose(fid);
@@ -72,12 +72,15 @@ if ptp_disp < 1e-3
     breathing_rate_bpm = 0;
 else
     %% Step 6: FFT for breathing rate estimation
+    movmean_filter = ones(1, 10) / 10; % Moving average filter
+    chest_displacement = conv(chest_displacement, movmean_filter, 'same');
+    
     nfft = 4096;
     f = (0:nfft-1) * (fs_frame / nfft);
     breath_spectrum = abs(fft(chest_displacement, nfft));
 
     % Focus on a reasonable breathing frequency range
-    f_low = 0.1; f_high = 0.7; % Hz
+    f_low = 0.11; f_high = 0.7; % Hz
     valid_idx = (f >= f_low) & (f <= f_high);
     f_valid = f(valid_idx);
     spectrum_valid = breath_spectrum(valid_idx);

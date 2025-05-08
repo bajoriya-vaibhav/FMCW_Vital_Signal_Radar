@@ -9,7 +9,7 @@ frame_period = 0.1958;   % Active Frame period (s) or 11.75ms
 fs_frame = 1 / frame_period; % Frame rate (~5.107 Hz) so 5.1 frames per seconds
 
 %% reading .bin file
-bin_filename = '.\aditya_breathrate_1Ghz_1\iqData_Raw_0.bin';
+bin_filename = '.\vaibbhav_breathrate_1Ghz\iqData_Raw_0.bin';
 fid = fopen(bin_filename, 'rb');
 raw_data = fread(fid, 'uint8=>uint8');
 fclose(fid);
