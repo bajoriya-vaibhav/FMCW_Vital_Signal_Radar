@@ -5,11 +5,11 @@ adc_samples = 113;        % Samples per chirp
 chirps_per_frame = 125;   % Chirps per frame
 num_rx = 4;               % Number of RX antennas
 bytes_per_sample = 4;     % (2 bytes I + 2 bytes Q)
-frame_period = 0.01175;   % Frame period (s)
-fs_frame = 1 / frame_period; % Frame rate (~85.11 Hz)
+frame_period = 0.1958;   % Active Frame period (s) or 11.75ms
+fs_frame = 1 / frame_period; % Frame rate (~5.107 Hz) so 5.1 frames per seconds
 
 %% reading .bin file
-bin_filename = '.\aditya_breathrate_1Ghz_1\iqData_Raw_0.bin';
+bin_filename = '.\no_breathrate_1Ghz\iqData_Raw_0.bin';
 fid = fopen(bin_filename, 'rb');
 raw_data = fread(fid, 'uint8=>uint8');
 fclose(fid);
@@ -58,7 +58,7 @@ chest_displacement = chest_displacement - mean(chest_displacement); % zero mean
 
 figure;
 plot(chest_displacement);
-xlabel('Time (s)');
+xlabel('Samples');
 ylabel('Displacement (m)');
 title('Raw Chest Displacement for 1 min');
 grid on;
