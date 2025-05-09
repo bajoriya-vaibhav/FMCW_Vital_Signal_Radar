@@ -55,7 +55,7 @@
 \textsc{\Large Radar Project Report}\\[0.5cm]
 
 \HRule \\[0.5cm]
-{\huge \bfseries Non-Contact Breathing Rate Monitoring System Using FMCW mmWave Radar}\\[0.5cm]
+{\huge \bfseries Non-Contact Breathing Rate Monitoring System Using AWR1642BOOST mmWave Radar}\\[0.5cm]
 \HRule \\[1cm]
 
 \begin{flushleft}
@@ -66,10 +66,9 @@ Aditya Prakash & \textsc{IMT2022566} \\
 Vaibhav Bajoriya & \textsc{IMT2022574} \\
 \end{tabular}\\[0.5cm]
 
-\textbf{Guide:} Prof. Vinod Veera Reddy
+\textbf{Guide:} Prof. Vinod Veera Reddy\\
+\textbf{Github Link:} \href{https://github.com/bajoriya-vaibhav/FMCW_Vital_Signal_Radar}{Codes}
 \end{flushleft}
-
-
 
 \end{titlepage}
 
@@ -86,7 +85,7 @@ Frequency-Modulated Continuous Wave (FMCW) radar technology offers a promising a
 \subsection{FMCW Radar for Physiological Monitoring}
 FMCW radar works by transmitting a continuous wave with linearly increasing frequency over time (a chirp). When these waves reflect off a moving object, such as a breathing chest, they return with phase shifts proportional to the object's displacement. By analyzing these phase shifts, the system can detect movements as small as fractions of a millimeter—sufficient to capture the chest wall motion during respiration.
 
-Millimeter-wave (mmWave) radar, operating at frequencies around 77-81 GHz and with a bandwidth of 1 GHz, is particularly suitable for this application due to its:
+Millimeter-wave (mmWave) radar, operating at frequencies around 77-81 GHz and with a bandwidth of 1 GHz, is suitable for this application due to its:
 \begin{itemize}
     \item High sensitivity to small motions (sub-millimeter)
     \item Ability to penetrate common materials like clothing and bedding
@@ -115,7 +114,7 @@ s_{tx}(t) = A_{tx}\cos\left(2\pi f_c t + \pi K t^2\right)
 Where:
 \begin{itemize}
     \item $f_c$ is the carrier frequency (77 GHz in our system)
-    \item $K$ is the frequency slope (22.11 MHz/μs in our configuration)
+    \item $K$ is the frequency slope ($22.11 MHz/ \mu s$ in our configuration)
     \item $t$ is time
 \end{itemize}
 
@@ -192,7 +191,7 @@ The breathing rate detection system follows a multi-stage signal processing pipe
 \begin{minipage}{0.48\textwidth}
   \centering
   \includegraphics[width=\linewidth]{Pattern_detection_Signal_processing.png}
-  \caption{Breathe detection by capturing breath cycles (consecutive peak + trough = 1 cycle)}
+  \caption{Breathe detection by capturing breath cycles}
 \end{minipage}
 \end{figure}
 
@@ -238,7 +237,7 @@ The experimental setup consisted of:
     \item TI AWR1642 BOOST mmWave radar sensor
     \item DCA1000EVM real-time data capture card
     \item Laptop system for data processing and analysis
-    \item Stable mounting platform positioned approximately 1 meter from the subject
+    \item Stable mounting platform positioned approximately 50-100 centimeter from the subject
 \end{itemize}
 
 \begin{figure}[H]
@@ -513,50 +512,56 @@ The chest displacement signal obtained from the radar measurements showed clear 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{vaibhav_raw.jpeg} % Create this figure
-\caption{Raw Captured Breathing for person-1 (Vaibhav)}
+\caption{Raw Captured Breathing for person-1 }
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{vaibhav_fft.jpeg} % Create this figure
-\caption{FFT breathing Rate for Person-1 (Vaibhav)}
+\caption{FFT breathing Rate for Person-1 }
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{vaibhav_peak.jpeg} % Create this figure
-\caption{Peak Breathing Rate for Person-1 (Vaibhav)}
+\caption{Breathing Cycles for Person-1 }
 \end{figure}
 
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
-\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
+\caption{Result of Breathing Rate for Person-1 }
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{raw_aditya.jpeg} % Create this figure
-\caption{Raw Captured Breathing for person-1 (Aditya)}
+\caption{Raw Captured Breathing for person-2 }
 
 \end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
-\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
-\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
+\includegraphics[width=1\textwidth]{aditya_fft.jpeg} % Create this figure
+\caption{FFT breathing Rate for Person-2 }
+
 \end{figure}
+
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{result_vaibhav.jpeg} % Create this figure
-\caption{Result of Breathing Rate for Person-1 (Vaibhav)}
+\includegraphics[width=1\textwidth]{aditya_peak.jpeg} % Create this figure
+\caption{Breathing Cycles for Person-2 }
 \end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{result_aditya.jpeg} % Create this figure
+\caption{Result of Breathing Rate for Person-2 }
 \end{figure}
+
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=1\textwidth]{no_breath.jpeg} % Create this figure
@@ -570,21 +575,21 @@ The estimated breathing rates were compared with reference measurements from a c
 
 \begin{table}[H]
 \centering
-\begin{tabular}{|c|c|c|c|}
+\begin{tabular}{|c|c|c|c|c|}
 \hline
-\textbf{Subject} & \textbf{Radar (BPM)} & \textbf{Reference (BPM)} & \textbf{Error (\%)} \\
+\textbf{Subject} & \textbf{FFT bpm} & \textbf{breathing cycles} & \textbf{Reference} & \textbf{Avg. Error (\%)} \\
 \hline
-Person-1 & 13 & 14 & 7.14\% \\
-Person-2 & 12 & 12 & 0\% \\
-No breathrate & 0 & 0 & 0\% \\
+Person-1 & 10.7 & 12.0 & 11 & 5.90\% \\
+Person-2 & 8.60 & 9.50 & 10 & 9.5\% \\
+No breathrate & 0 & 0 & 0 & 0\% \\
 \hline
 \end{tabular}
 \caption{Breathing Rate Estimation Results}
 \end{table}
 
-Reference taken is manually counting the breath rates while taking reading.The system demonstrated high accuracy in breathing rate estimation, with errors typically less than 8\% compared to the reference measurements with delta difference in the bpm at max ±2 over multiple experiments, and most of the time it is coming correctly.
+Reference taken is manually counting the breath rates while taking reading.The system demonstrated high accuracy in breathing rate estimation, with errors typically less than 10\% compared to the reference measurements with delta difference in the bpm at max ±2 over multiple experiments, and most of the time it is coming correctly.
 
-\subsection{System Limitations and Challenges}
+\subsection*{System Limitations and Challenges}
 Several limitations and challenges were identified during the evaluation:
 
 \begin{itemize}
